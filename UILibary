@@ -10,6 +10,8 @@ local Tabs = 0
 local Modules = {}
 local Loaded = {}
 
+getgenv().GUI = GUI
+
 local NotifFrame = Instance.new("Frame", GUI)
 NotifFrame.Size = UDim2.new(0.15, 0, 0.07, 0)
 NotifFrame.Position = UDim2.new(0.85, 0, 0.78, 0)
