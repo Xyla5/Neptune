@@ -1,0 +1,390 @@
+getgenv().Destructed = false
+getgenv().HUDRGB = Color3.fromRGB(95, 134, 217)
+getgenv().SaveFileName = "Neptune"
+getgenv().NotificationBar = true
+getgenv().Notifications = true
+getgenv().GameID = game.GameId
+
+local GUI = Instance.new("ScreenGui", game.CoreGui)
+local Tabs = 0
+local Modules = {}
+local Loaded = {}
+
+local NotifFrame = Instance.new("Frame", GUI)
+NotifFrame.Size = UDim2.new(0.15, 0, 0.07, 0)
+NotifFrame.Position = UDim2.new(0.85, 0, 0.78, 0)
+NotifFrame.BackgroundTransparency = 1
+local UIS = game:GetService("UserInputService")
+
+UIS.InputBegan:Connect(function(input)
+	if input == Enum.KeyCode.RightShift then GUI.Enabled = not GUI.Enabled end
+end)
+
+Library = {
+
+	Save = function()
+		local Save = game:GetService("HttpService"):JSONEncode(Modules)
+		writefile(getgenv().SaveFileName..getgenv().GameID.."-NeptuneUI.lua",Save)
+	end,
+
+	Load = function()
+		if isfile(getgenv().SaveFileName..getgenv().GameID.."-NeptuneUI.lua") then
+			local SavedData = readfile(getgenv().SaveFileName..getgenv().GameID.."-NeptuneUI.lua")
+			local Decoded = game:GetService("HttpService"):JSONDecode(SavedData)
+			Loaded = Decoded
+		end
+	end,
+
+	Notify = function(Header, Body, Time)
+		spawn(function()
+			local Notification = Instance.new("Frame", NotifFrame)
+			Notification.Size = UDim2.new(1, 0, 1, 0)
+			Notification.BorderSizePixel = 0
+			Notification.BackgroundTransparency = 0.35
+			Notification.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+			Notification.Position = UDim2.new(1, 0, 0, 0)
+			local Headertxt = Instance.new("TextLabel", Notification)
+			Headertxt.Size = UDim2.new(1, 0, 0.25, 0)
+			Headertxt.BackgroundTransparency = 1
+			Headertxt.Position = UDim2.new(0, 0, 0.05, 0)
+			Headertxt.Font = "GothamBold"
+			Headertxt.Text = Header
+			Headertxt.TextColor3 = Color3.fromRGB(255, 255, 255)
+			Headertxt.TextSize = Headertxt.AbsoluteSize.X * 0.0745
+			local Bodytxt = Instance.new("TextLabel", Notification)
+			Bodytxt.Size = UDim2.new(1, 0, 0.55, 0)
+			Bodytxt.BackgroundTransparency = 1
+			Bodytxt.Position = UDim2.new(0, 0, 0.35, 0)
+			Bodytxt.Font = "GothamBold"
+			Bodytxt.Text = Body
+			Bodytxt.TextColor3 = Color3.fromRGB(255, 255, 255)
+			Bodytxt.TextSize = Bodytxt.AbsoluteSize.X * 0.08
+			Bodytxt.TextWrapped = true
+			local Bar = Instance.new("Frame", Notification)
+			Bar.Size = UDim2.new(1, 0, 0.1, 0)
+			Bar.Position = UDim2.new(1, 0, 0.9, 0)
+			Bar.BorderSizePixel = 0
+			Bar.BackgroundColor3 = getgenv().HUDRGB
+			Bar.AnchorPoint = Vector2.new(1, 0)
+			for i = 1, 25 do
+				task.wait()
+				Bar.BackgroundColor3 = getgenv().HUDRGB
+				Notification.Position = Notification.Position - UDim2.new(0.04, 0, 0, 0)
+			end
+			for i = 1, 100 do
+				task.wait(Time / 100)
+				Bar.BackgroundColor3 = getgenv().HUDRGB
+				Bar.Size = Bar.Size - UDim2.new(0.01, 0, 0, 0)
+			end
+			for i = 1, 25 do
+				task.wait()
+				Bar.BackgroundColor3 = getgenv().HUDRGB
+				Notification.Position = Notification.Position + UDim2.new(0.04, 0, 0, 0)
+			end
+			Notification:Destroy()
+		end)
+	end,
+	MakeTab = function(TabName)
+		-- Setup
+		Tabs = Tabs + 1
+		Allowed = { "Pass" }
+		-- Instances
+		local TabFrame = Instance.new("Frame", GUI)
+		local Title = Instance.new("TextLabel", TabFrame)
+		-- Properties
+		TabFrame.Size = UDim2.new(0.09 * 1.235, 0, 0.035, 0)
+		TabFrame.Position = UDim2.new(0.13 * Tabs - 0.1, 0, 0.02, 0)
+		TabFrame.BackgroundColor3 = Color3.fromRGB(29, 29, 29)
+		TabFrame.BorderSizePixel = 0
+		TabFrame.Active = true
+		TabFrame.Draggable = true
+		Title.Size = UDim2.new(1, 0, 1, 0)
+		Title.TextSize = Title.AbsoluteSize.X * 0.08
+		Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+		Title.BackgroundTransparency = 1
+		Title.Font = Enum.Font.GothamBlack
+		Title.Text = string.lower("   " .. TabName[1])
+		Title.TextXAlignment = "Left"
+		Title.Name = "Pass"
+		return TabFrame
+	end,
+	AddModule = function(NameCheck, Module)
+		--Loading
+		local ModuleSave
+		for i,v in pairs(Loaded) do
+			if v.ModuleName == Module.ModuleName and Module.ModuleName ~= "Destruct" then
+				Module.Dropdowns = v.Dropdowns
+				Module.Enabled = v.Enabled
+				Module.Bind = v.Bind
+			end
+		end
+		-- Unpacked
+		local TabFrame = Module.Tab
+		-- Instances
+		local TabDropdown = Instance.new("Frame", TabFrame)
+		local Title = Instance.new("TextButton", TabDropdown)
+		-- Properties
+		TabDropdown.Size = UDim2.new(1, 0, 1, 0)
+		local ModuleChildren = TabFrame:GetChildren()
+		local ModuleCount = #ModuleChildren
+		TabDropdown.Position = UDim2.new(0, 0, ModuleCount - 1, 0)
+		TabDropdown.BackgroundColor3 = Color3.fromRGB(56, 56, 56)
+		Title.Size = UDim2.new(1, 0, 1, 0)
+		Title.AnchorPoint = Vector2.new(0.5, 0.5)
+		Title.Position = UDim2.new(0.5, 0, 0.5, 0)
+		TabDropdown.BorderSizePixel = 0
+		if Module.ModuleType == "Toggle" then Title.BackgroundTransparency = 0
+		elseif Module.ModuleType == "Note" then Title.BackgroundTransparency = 1 end
+		Title.BackgroundColor3 = Color3.fromRGB(56, 56, 56)
+		Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+		Title.Font = Enum.Font.Code
+		Title.TextXAlignment = "Left"
+		Title.Text = string.lower("  " .. Module.ModuleName)
+		Title.BorderSizePixel = 0
+		Title.TextSize = Title.AbsoluteSize.X * 0.08
+		Title.MouseButton1Click:Connect(function()
+			if Module.Enabled == false then
+				Module.Enabled = true
+				spawn(function() Module.Function(Module, Module.Dropdowns) end)
+				repeat
+					Title.BackgroundColor3 = getgenv().HUDRGB
+					task.wait()
+				until Module.Enabled == false
+			else
+				Module.Enabled = false
+				Title.BackgroundColor3 = Color3.fromRGB(56, 56, 56)
+			end
+		end)
+
+		spawn(function()
+			if Module.Enabled == true then
+				spawn(function() Module.Function(Module, Module.Dropdowns) end)
+				repeat
+					Title.BackgroundColor3 = getgenv().HUDRGB
+					task.wait()
+				until Module.Enabled == false
+			else
+				Module.Enabled = false
+				Title.BackgroundColor3 = Color3.fromRGB(56, 56, 56)
+			end
+		end)
+
+		local SavePosition = #Modules + 1
+		local Save = table.insert(Modules,Module)
+
+		local function UpdateSave()
+			table.remove(Modules,SavePosition)
+			Save = table.insert(Modules,Module)
+			SavePosition = #Modules + 1
+			Library.Save()
+		end
+
+		local DropdownNum = 0
+		for i, v in pairs(Module.Dropdowns) do DropdownNum = DropdownNum + 1 end
+		local Opened = false
+		local DropdownUIs = {}
+		local debounce = false
+		if isfile(getgenv().SaveFileName.."NeptuneUI.lua") then
+			local save = readfile(getgenv().SaveFileName.."NeptuneUI.lua")
+		end
+		UIS.InputBegan:Connect(function(input)
+			if input.KeyCode == Module.Bind and Module.ModuleName == NameCheck and debounce == false then
+				debounce = true
+				spawn(function()
+					if Module.Enabled == false then
+						Module.Enabled = true
+						spawn(function() Module.Function(Module, Module.Dropdowns) end)
+						repeat
+							Title.BackgroundColor3 = getgenv().HUDRGB
+							task.wait()
+						until Module.Enabled == false
+					else
+						Module.Enabled = false
+						Title.BackgroundColor3 = Color3.fromRGB(56, 56, 56)
+					end
+				end)
+				task.wait(0.1)
+				debounce = false
+			end
+			Library.Save()
+		end)
+		Title.MouseButton2Click:Connect(function()
+			Library.Save()
+			if Opened == false then
+				for i, v in pairs(TabFrame:GetChildren()) do
+					if v:IsA"Frame" and v.Position.Y.Scale > TabDropdown.Position.Y.Scale then
+						v.Position = v.Position + UDim2.new(0, 0, DropdownNum + 1, 0)
+					end
+				end
+				local added = 0
+				for i, v in pairs(Module.Dropdowns) do
+					added = added + 1
+					local Newdropdown = Instance.new("Frame", TabDropdown)
+					Newdropdown.Size = UDim2.new(1, 0, 1, 0)
+					Newdropdown.Position = UDim2.new(0, 0, added, 0)
+					Newdropdown.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
+					Newdropdown.BorderSizePixel = 0
+					table.insert(DropdownUIs, Newdropdown)
+					if v[1] == "Toggle" then
+						local Text = Instance.new("TextButton", Newdropdown)
+						local Frame = Instance.new("Frame", Text)
+						Frame.BorderSizePixel = 0
+						Frame.BackgroundColor3 = Color3.fromRGB(33, 33, 33)
+						Frame.Size = UDim2.new(0.105, 0, 0.6, 0)
+						Frame.AnchorPoint = Vector2.new(0.5, 0.5)
+						Frame.Position = UDim2.new(0.8, 0, 0.5, 0)
+						Text.Size = UDim2.new(1, 0, 1, 0)
+						Text.BackgroundTransparency = 1
+						Text.TextSize = Text.AbsoluteSize.X * 0.0745
+						Text.Font = Enum.Font.Code
+						Text.TextColor3 = Color3.fromRGB(255, 255, 255)
+						Text.TextXAlignment = "Left"
+						Text.Text = string.lower("  " .. v[3])
+						if v[2] == true then
+							spawn(function()
+								repeat
+									task.wait()
+									Frame.BackgroundColor3 = getgenv().HUDRGB
+								until v[2] == false
+							end)
+						else
+							v[2] = false
+							task.wait(0.1)
+							Frame.BackgroundColor3 = Color3.fromRGB(33, 33, 33)
+						end
+						Text.MouseButton1Click:Connect(function()
+							if v[2] == false then
+								v[2] = true
+								spawn(function()
+									repeat
+										task.wait()
+										Frame.BackgroundColor3 = getgenv().HUDRGB
+									until v[2] == false
+								end)
+							else
+								v[2] = false
+								task.wait(0.1)
+								Frame.BackgroundColor3 = Color3.fromRGB(33, 33, 33)
+							end
+							Library.Save()
+						end)
+					elseif v[1] == "Slider" then
+						local SliderFrame = Instance.new("TextButton", Newdropdown)
+						local NewSlider = Instance.new("TextButton", SliderFrame)
+						local newtext = Instance.new("TextLabel", SliderFrame)
+						newtext.Size = UDim2.new(0.4, 0, 2, 0)
+						newtext.Position = UDim2.new(0.6, 0, -3, 0)
+						newtext.Text = string.lower(v[5] .. ": " .. v[4])
+						newtext.Font = Enum.Font.Code
+						NewSlider.Text = ""
+						SliderFrame.Text = ""
+						newtext.TextColor3 = Color3.fromRGB(255, 255, 255)
+						newtext.TextScaled = true
+						newtext.BackgroundTransparency = 1
+						local dragging = false
+						SliderFrame.MouseButton1Down:Connect(function()
+							dragging = true
+							repeat
+								task.wait()
+								local mouseL = UIS:GetMouseLocation()
+								local Relative = mouseL - NewSlider.AbsolutePosition
+								local percent = math.clamp(Relative.X / SliderFrame.AbsoluteSize.X, 0, 1)
+								NewSlider.Size = UDim2.new(percent, 0, 1, 0)
+
+								local function round(number, decimalPlaces)
+									return math.round(number * 10 ^ decimalPlaces) * 10 ^ -decimalPlaces
+								end
+
+								local newval = round(v[3] * percent, 0)
+								v[4] = newval
+								newtext.Text = string.lower(v[5] .. ": " .. v[4])
+							until dragging == false
+						end)
+						NewSlider.MouseButton1Down:Connect(function()
+							dragging = true
+							repeat
+								task.wait()
+								local mouseL = UIS:GetMouseLocation()
+								local Relative = mouseL - NewSlider.AbsolutePosition
+								local percent = math.clamp(Relative.X / SliderFrame.AbsoluteSize.X, 0, 1)
+								NewSlider.Size = UDim2.new(percent, 0, 1, 0)
+
+								local function round(number, decimalPlaces)
+									return math.round(number * 10 ^ decimalPlaces) * 10 ^ -decimalPlaces
+								end
+
+								local newval = round(v[3] * percent, 0)
+								v[4] = newval
+								newtext.Text = string.lower(v[5] .. ": " .. v[4])
+							until dragging == false
+							Library.Save()
+						end)
+						UIS.InputEnded:Connect(function(input)
+							if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+						end)
+						NewSlider.Size = UDim2.new(v[4] / v[3], 0, 1, 0)
+						NewSlider.BorderSizePixel = 0
+						spawn(function()
+							repeat
+								task.wait()
+								NewSlider.BackgroundColor3 = getgenv().HUDRGB
+							until true == false
+						end)
+						SliderFrame.BackgroundColor3 = Color3.fromRGB(33, 33, 33)
+						SliderFrame.Size = UDim2.new(0.8, 0, 0.2, 0)
+						SliderFrame.Position = UDim2.new(0.1, 0, 0.7, 0)
+						SliderFrame.BorderSizePixel = 0
+					elseif v[1] == "Note" then end
+				end
+				local BindUI = Instance.new("TextButton", TabDropdown)
+				BindUI.Size = UDim2.new(1, 0, 1, 0)
+				BindUI.Position = UDim2.new(0, 0, added + 1, 0)
+				BindUI.BorderSizePixel = 0
+				BindUI.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
+				BindUI.TextSize = BindUI.AbsoluteSize.X * 0.0735
+				BindUI.Font = "Code"
+				BindUI.Text = "Bind:", Module.Bind
+				BindUI.TextColor3 = Color3.fromRGB(255, 255, 255)
+				if Module.Bind ~= nil then
+					local BindText = UIS:GetStringForKeyCode(Module.Bind)
+					BindUI.Text = "Bind: " .. BindText
+				else
+					BindUI.Text = "Bind: " .. "None"
+				end
+				table.insert(DropdownUIs, BindUI)
+				BindUI.MouseButton1Click:Connect(function()
+					if Module.Bind == nil then
+						local OriginalBind = Module.Bind
+						local NewBind = Module.Bind
+						local event = game:GetService"UserInputService".InputBegan:Connect(function(input)
+							Module.Bind = input.KeyCode
+							NewBind = input.KeyCode
+						end)
+						repeat task.wait() until OriginalBind ~= NewBind
+						event:Disconnect()
+						local BindText = UIS:GetStringForKeyCode(Module.Bind)
+						BindUI.Text = "Bind: " .. BindText
+						Library.Save()
+					else
+						BindUI.Text = "Bind: " .. "None"
+						Module.Bind = nil
+					end
+				end)
+				Opened = true
+			else
+				Opened = false
+				for i, v in pairs(DropdownUIs) do v:Destroy() end
+				for i, v in pairs(TabFrame:GetChildren()) do
+					if v:IsA"Frame" and v.Position.Y.Scale > TabDropdown.Position.Y.Scale then
+						v.Position = v.Position - UDim2.new(0, 0, DropdownNum + 1, 0)
+					end
+				end
+				Library.Save()
+			end
+		end)
+	end
+}
+
+Library.Load()
+
+Library.Notify("Neptune", "Script loaded!", .2)
