@@ -388,3 +388,5 @@ Library = {
 Library.Load()
 
 Library.Notify("Neptune", "Script loaded!", .2)
+
+return Library
